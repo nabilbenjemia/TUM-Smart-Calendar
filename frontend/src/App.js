@@ -1,9 +1,10 @@
 import "./App.css";
 import Sidebar from "./components/Sidebar";
 import CalendarView from "./components/CalendarView";
+import { useState } from "react";
 
 function App() {
-  
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -11,11 +12,10 @@ function App() {
         Hello!
       </div>*/}
       <h1 className="text-4xl font-bold text-center py-8 text-[#0065bd]">TUM Smart Calendar</h1>
-      
-      <div className="flex mx-8 mb-2 gap-2 flex-auto">
-        <Sidebar />
-        <CalendarView />
-      </div>
+      {<div className="flex mx-8 mb-2 gap-2 flex-auto">
+        <Sidebar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+        <CalendarView selectedDate={selectedDate} setSelectedDate={setSelectedDate}/>
+      </div>}
 
     </div>
   );
