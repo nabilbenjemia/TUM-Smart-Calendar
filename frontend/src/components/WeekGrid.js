@@ -26,12 +26,25 @@ const WeekGrid = ({ weekDays }) => (
       {/* Time column */}
       <div className="grid grid-rows-16">
         {hours.map((hour, idx) => (
-          <div key={idx} className="h-10 flex items-start justify-end pr-2 text-xs text-gray-500 ">
-            {hour}
+          <div
+            key={idx}
+            className="h-10 relative text-xs text-gray-500 pr-2"
+          >
+            {/* Hour label with the shift */}
+            <div className="flex items-center justify-end -mt-5 h-full">
+              {hour}
+            </div>
+
+            {/* Extra label that should NOT inherit margin */}
+            {idx === hours.length - 1 && (
+              <span className="absolute  right-2 text-xs text-gray-500 mt-2">
+                00:00
+              </span>
+            )}
           </div>
         ))}
-        <div className="h-10 flex items-start justify-end pr-2 text-xs text-gray-500 ">00:00</div>
       </div>
+
       {/* Day columns */}
       {weekDays.map((day, dayIdx) => (
         <div key={dayIdx} className="grid grid-rows-16">
