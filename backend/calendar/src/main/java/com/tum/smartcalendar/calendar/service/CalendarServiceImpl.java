@@ -57,4 +57,9 @@ public class CalendarServiceImpl implements CalendarService {
     public void deleteTimeSlot(String userId, String slotId) {
         slotRepo.deleteById(slotId);
     }
+    @Override
+    public List<TimeSlot> getUserTimeSlotsInRange(String userId, LocalDateTime from, LocalDateTime to) {
+        return slotRepo.findByUserIdAndStartTimeBetween(userId, from, to);
+    }
+
 }

@@ -15,4 +15,6 @@ public interface CalendarService {
     List<TimeSlot> getUserTimeSlots(String userId);
     List<TimeSlot> getExamTimeSlots(String userId, String examId);
     void deleteTimeSlot(String userId, String slotId);
+    List<TimeSlot> getUserTimeSlotsInRange(String userId, LocalDateTime from, LocalDateTime to);
+
 }

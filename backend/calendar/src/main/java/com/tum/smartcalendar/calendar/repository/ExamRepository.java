@@ -7,3 +7,4 @@ import java.util.List;
 public interface ExamRepository extends JpaRepository<Exam, String> {
     List<Exam> findByUserId(String userId);
 }
+

@@ -112,4 +112,15 @@ public class CalendarController {
 
         return "Schedule generated and timeslots saved";
     }
+    @GetMapping("/{userId}/timeslots/range")
+    public List<TimeSlot> getTimeSlotsInRange(
+            @PathVariable String userId,
+            @RequestParam String from,
+            @RequestParam String to
+    ) {
+        LocalDateTime fromDate = LocalDateTime.parse(from);
+        LocalDateTime toDate = LocalDateTime.parse(to);
+
+        return calendarService.getUserTimeSlotsInRange(userId, fromDate, toDate);
+    }
 }

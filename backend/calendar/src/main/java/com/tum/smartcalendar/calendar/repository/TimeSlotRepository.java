@@ -8,4 +8,6 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, String> {
 
     List<TimeSlot> findByUserId(String userId);
     List<TimeSlot> findByUserIdAndExamId(String userId, String examId);
+    List<TimeSlot> findByUserIdAndStartTimeBetween(String userId, LocalDateTime from, LocalDateTime to);
+
 }
