@@ -1,0 +1,34 @@
+# Node.js dependencies
+node_modules/
+frontend/node_modules/
+
+# Frontend build output
+dist/
+build/
+
+# Gradle build and cache
+.gradle/
+build/
+
+# Java wrapper and IDE files
+*.class
+*.jar
+*.war
+*.iml
+.gradle/
+out/
+bin/
+*/bin/
+*/out/
+# Database data
+mysql-data/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+.env
+*/.env
