@@ -1,4 +1,18 @@
+import React, { useState } from "react";
+import ModuleModal from "./ModuleModal";
+
 const Header = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modules, setModules] = useState([]);
+
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+
+    const saveModules = () => {
+        console.log("Modules saved:", modules);
+        setIsModalOpen(false);
+    };
+
   return (
     <header className="flex items-center justify-between px-6 py-4 mb-2 bg-white shadow">
       {/* Left: Buttons */}
@@ -9,7 +23,8 @@ const Header = () => {
         <button className="bg-[#0065bd] hover:bg-[#005aab] text-white px-4 py-2 rounded-lg shadow">
           Add Event
         </button>
-        <button className="bg-[#EFBF04] hover:bg-[#C29700] text-white px-4 py-2 rounded-lg shadow relative">
+        <button className="bg-[#EFBF04] hover:bg-[#C29700] text-white px-4 py-2 rounded-lg shadow relative"
+        onClick={() => setIsModalOpen(true)}>
           <img
             src="/new_logo2.png"
             alt="AI Logo"
@@ -37,6 +52,17 @@ const Header = () => {
           Logout
         </button>
       </div>
+
+
+
+      {/* Module Modal */}
+      <ModuleModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        modules={modules}
+        setModules={setModules}
+        onSave={saveModules}
+      />
     </header>
   );
 };
