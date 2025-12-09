@@ -1,7 +1,7 @@
 import { getWeekDays } from "../utils/dateUtils";
 import WeekGrid from "./WeekGrid";
 
-function CalendarView({ selectedDate, setSelectedDate }) {
+function CalendarView({ selectedDate, setSelectedDate, timeslots }) {
   
   const weekDays = getWeekDays(selectedDate);
 
@@ -58,7 +58,7 @@ function CalendarView({ selectedDate, setSelectedDate }) {
       <div className="flex-1 flex flex-col gap-2">
         
         {/* Day columns with time slots */}
-        <WeekGrid weekDays={weekDays} />
+        <WeekGrid weekDays={weekDays} timeslots={timeslots} />
       </div>
     </div>
   );

@@ -3,16 +3,9 @@ import React from "react";
 const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hours = Array.from({ length: 16 }).map((_, h) => `${h + 8}:00`);
 
-const timeslots = [
-  { date: "2025-12-04", startTime: "08:00", endTime: "10:00", text: "Team Meeting" },
-  { date: "2025-12-04", startTime: "10:00", endTime: "11:00", text: "Pause" },
-  { date: "2025-12-05", startTime: "12:00", endTime: "17:00", text: "Introduction to AI Lecture  to AI Lecture I to AI Lecture I to AI Lecture IIntroduction to AI Lecture Introduction to AI Lecture Introduction to AI Lecture Introduction to AI Lecture" },
-  { date: "2025-12-09", startTime: "12:00", endTime: "19:00", text: "Introducuuuuuuuuuuuuuution to ML Lecture" }
-];
-
 const getHourIdx = (time) => parseInt(time.split(":")[0], 10) - 8;
 
-const WeekGrid = ({ weekDays }) => {
+const WeekGrid = ({ weekDays, timeslots }) => {
   return (
     <div className="h-full flex flex-col">
       <table className="table-fixed w-full">
@@ -55,15 +48,18 @@ const WeekGrid = ({ weekDays }) => {
                     <td
                       key={dIdx}
                       rowSpan={rowSpan}
-                      className="align-top"
-                      style={{ height: cellHeight }}
+                      className="align-top border border-gray-200 relative p-0"
+                      style={{ 
+                        height: cellHeight,
+                        backgroundImage: 'repeating-linear-gradient(to bottom, #e5e7eb 0, #e5e7eb 1px, transparent 1px, transparent 2.1rem)',
+                        backgroundSize: '100% 2.1rem',
+                        backgroundPosition: '0 -1px'
+                      }}
                     >
-                      <div className="flex items-center justify-center h-full p-1">
-                        <div className="bg-[#5E94D4] h-[95%] rounded-lg w-[95%]">
-                          <div className="w-full h-full text-sm text-left break-words overflow-hidden px-2 py-0.5 rounded-lg line-clamp-3">
+                      <div className="flex items-center justify-center h-full px-2 py-0.5 bg-[#5E94D4] h-[95%] rounded-lg w-[95%] border-2 border-white">
+                          <div className="w-full h-full text-sm text-left break-words overflow-hidden rounded-lg line-clamp-3 ">
                             {slot.text}
                           </div>
-                        </div>
                       </div>
                     </td>
                   );
@@ -75,7 +71,9 @@ const WeekGrid = ({ weekDays }) => {
                   getHourIdx(ts.startTime) < hIdx &&
                   getHourIdx(ts.endTime) > hIdx
                 );
-                if (covered) return null;
+                if (covered) {
+                  return null;
+                }
 
                 // Empty cell
                 return <td key={dIdx} className="border border-gray-200"></td>;

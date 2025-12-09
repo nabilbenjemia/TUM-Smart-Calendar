@@ -1,12 +1,33 @@
 import React, { useState } from "react";
 import ModuleModal from "./ModuleModal";
+import EventModal from "./EventModal";
 
-const Header = () => {
+const Header = ({ timeslots, setTimeslots }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [modules, setModules] = useState([]);
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
+
+    const handleAddEvent = () => {
+        setIsEventModalOpen(true);
+    };
+
+    const saveEvent = (event) => {
+      /**
+       * add POST call to backend here to save event
+       */
+        console.log("Event saved:", event);
+        const newEvent = {
+            date: event.startTime.slice(0, 10),       // "2025-12-15"
+            startTime: event.startTime.slice(11, 16), // "12:00"
+            endTime: event.endTime.slice(11, 16),     // "14:00"
+            text: event.title
+        };
+        setTimeslots([...timeslots, newEvent]);
+        setIsEventModalOpen(false);
+    };
 
     const saveModules = () => {
         console.log("Modules saved:", modules);
@@ -20,7 +41,8 @@ const Header = () => {
         <button className="bg-[#0065bd] hover:bg-[#005aab] text-white px-4 py-2 rounded-lg shadow">
           Import Calendar
         </button>
-        <button className="bg-[#0065bd] hover:bg-[#005aab] text-white px-4 py-2 rounded-lg shadow">
+        <button className="bg-[#0065bd] hover:bg-[#005aab] text-white px-4 py-2 rounded-lg shadow"
+        onClick={() => handleAddEvent()}>
           Add Event
         </button>
         <button className="bg-[#EFBF04] hover:bg-[#C29700] text-white px-4 py-2 rounded-lg shadow relative"
@@ -62,6 +84,13 @@ const Header = () => {
         modules={modules}
         setModules={setModules}
         onSave={saveModules}
+      />
+
+      {/* Event Modal */}
+      <EventModal
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        onSave={saveEvent}
       />
     </header>
   );
