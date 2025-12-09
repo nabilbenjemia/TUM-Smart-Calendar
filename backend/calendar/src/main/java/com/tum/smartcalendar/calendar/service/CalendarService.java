@@ -2,6 +2,7 @@ package com.tum.smartcalendar.calendar.service;
 
 import com.tum.smartcalendar.calendar.model.Exam;
 import com.tum.smartcalendar.calendar.model.TimeSlot;
+import java.time.LocalDateTime;
 
 import java.util.List;
 

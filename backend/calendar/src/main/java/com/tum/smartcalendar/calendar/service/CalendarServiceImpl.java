@@ -5,7 +5,7 @@ import com.tum.smartcalendar.calendar.model.TimeSlot;
 import com.tum.smartcalendar.calendar.repository.ExamRepository;
 import com.tum.smartcalendar.calendar.repository.TimeSlotRepository;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
