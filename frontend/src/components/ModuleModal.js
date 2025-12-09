@@ -10,7 +10,7 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
   useEffect(() => {
     if (isOpen && !hasCleanedUp.current) {
       const filtered = modules.filter(
-        (m) => m.name.trim() !== "" || m.ects.trim() !== ""
+        (m) => m.courseName.trim() !== "" || m.ects.trim() !== ""
       );
       if (filtered.length !== modules.length) {
         setModules(filtered);
@@ -37,12 +37,12 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
     // Check if the last module has all required fields filled
     if (modules.length > 0) {
       const lastModule = modules[modules.length - 1];
-      if (!lastModule.name.trim() || !lastModule.ects.trim() || !lastModule.examDate.trim() || !lastModule.duration.toString().trim()) {
+      if (!lastModule.courseName.trim() || !lastModule.ects.trim() || !lastModule.examDateTime.trim() || !lastModule.durationMinutes.toString().trim()) {
         alert("Please fill in all fields of the current module before adding a new one.");
         return;
       }
     }
-    setModules([...modules, { name: "", ects: "", examDate: "", duration: "" }]);
+    setModules([...modules, { courseName: "", ects: "", examDateTime: "", durationMinutes: "" }]);
     
     // Scroll to bottom after adding module
     setTimeout(() => {
@@ -60,7 +60,7 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
   const handleSave = () => {
     // Filter out empty modules before saving
     const filtered = modules.filter(
-      (m) => m.name.trim() !== "" || m.ects.trim() !== ""
+      (m) => m.courseName.trim() !== "" || m.ects.trim() !== ""
     );
     setModules(filtered);
     onSave();
@@ -68,7 +68,7 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
 
   const handleContinue = () => {
     const filtered = modules.filter(
-      (m) => m.name.trim() !== "" || m.ects.trim() !== ""
+      (m) => m.courseName.trim() !== "" || m.ects.trim() !== ""
     );
     setModules(filtered);
     setStep(2);
@@ -84,12 +84,12 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
     // Check if the last time slot has all fields filled
     if (freeSlots.length > 0) {
       const lastSlot = freeSlots[freeSlots.length - 1];
-      if (!lastSlot.date || !lastSlot.date.trim() || !lastSlot.startTime || !lastSlot.startTime.trim() || !lastSlot.endTime || !lastSlot.endTime.trim()) {
+      if (!lastSlot.startTime || !lastSlot.startTime.trim() || !lastSlot.endTime || !lastSlot.endTime.trim()) {
         alert("Please fill in all fields of the current time slot before adding a new one.");
         return;
       }
     }
-    setFreeSlots([...freeSlots, { date: "", startTime: "", endTime: "" }]);
+    setFreeSlots([...freeSlots, { startTime: "", endTime: "" }]);
 
     setTimeout(() => {
       if (scrollContainerRef.current) {
@@ -105,13 +105,15 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
 
   const handleFinalSave = () => {
     const filteredSlots = freeSlots.filter(
-      (s) => s.date && s.date.trim() !== "" && s.startTime && s.startTime.trim() !== "" && s.endTime && s.endTime.trim() !== ""
+      (s) => s.startTime && s.startTime.trim() !== "" && s.endTime && s.endTime.trim() !== ""
     );
-    setFreeSlots(filteredSlots);
     
     const data = {
-      modules: modules,
-      freeSlots: filteredSlots
+      exams: modules,
+      freeSlots: filteredSlots.map(slot => ({
+        startTime: slot.startTime,  
+        endTime: slot.endTime        
+      }))
     };
     
     console.log("Saving data:", JSON.stringify(data, null, 2));
@@ -123,7 +125,7 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white p-6 rounded-xl shadow-xl w-96 max-h-[80%] flex flex-col">
         <h2 className="text-lg font-bold mb-4 text-[#0065bd]">
           {step === 1 ? "Add Modules" : "Add Free Time Slots"}
@@ -147,8 +149,8 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
                   <label className="block text-sm font-medium">Module Name</label>
                   <input
                     type="text"
-                    value={m.name}
-                    onChange={(e) => updateField(idx, "name", e.target.value)}
+                    value={m.courseName}
+                    onChange={(e) => updateField(idx, "courseName", e.target.value)}
                     className="w-full border rounded px-2 py-1 mt-1"
                     placeholder="e.g. Algorithms"
                   />
@@ -165,21 +167,21 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
                   <label className="block text-sm font-medium mt-2">Exam Date & Time</label>
                   <input
                     type="datetime-local"
-                    value={m.examDate}
-                    onChange={(e) => updateField(idx, "examDate", e.target.value)}
+                    value={m.examDateTime}
+                    onChange={(e) => updateField(idx, "examDateTime", e.target.value)}
                     className="w-full border rounded px-2 py-1 mt-1"
                   />
 
-                  <label className="block text-sm font-medium mt-2">Duration (hours)</label>
+                  <label className="block text-sm font-medium mt-2">Duration (minutes)</label>
                   <input
                     type="number"
-                    value={m.duration}
-                    max={4}
-                    min={1}
-                    onChange={(e) => updateField(idx, "duration", e.target.value)}
+                    value={m.durationMinutes}
+                    max={180}
+                    min={60}
+                    onChange={(e) => updateField(idx, "durationMinutes", e.target.value)}
                     className="w-full border rounded px-2 py-1 mt-1"
-                    placeholder="e.g. 2"
-                    step="0.5"
+                    placeholder="e.g. 120"
+                    step="30"
                   />
                 </div>
               ))}
@@ -190,7 +192,7 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
               onClick={addModule}
               className="bg-[#0065bd] text-white px-3 py-1 rounded-lg w-full mb-4"
             >
-              + Add Another Module
+              + Add Module
             </button>
 
             <div className="flex justify-between">
@@ -232,8 +234,11 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
                       <label className="block text-sm font-medium">From</label>
                       <input
                         type="time"
-                        value={slot.startTime}
-                        onChange={(e) => updateFreeSlot(idx, "startTime", e.target.value)}
+                        value={slot.startTime ? slot.startTime.split("T")[1] || "" : ""}
+                        onChange={(e) => {
+                          const dateValue = slot.date || "";
+                          updateFreeSlot(idx, "startTime", dateValue + "T" + e.target.value);
+                        }}
                         className="w-full border rounded px-2 py-1 mt-1"
                       />
                     </div>
@@ -241,8 +246,11 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
                       <label className="block text-sm font-medium">To</label>
                       <input
                         type="time"
-                        value={slot.endTime}
-                        onChange={(e) => updateFreeSlot(idx, "endTime", e.target.value)}
+                        value={slot.endTime ? slot.endTime.split("T")[1] || "" : ""}
+                        onChange={(e) => {
+                          const dateValue = slot.date || "";
+                          updateFreeSlot(idx, "endTime", dateValue + "T" + e.target.value);
+                        }}
                         className="w-full border rounded px-2 py-1 mt-1"
                       />
                     </div>
@@ -255,7 +263,7 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave }) => {
               onClick={addFreeSlot}
               className="bg-[#0065bd] text-white px-3 py-1 rounded-lg w-full mb-4"
             >
-              + Add Another Time Slot
+              + Add Time Slot
             </button>
 
             <div className="flex justify-between items-center">

@@ -3,7 +3,7 @@ import ModuleModal from "./ModuleModal";
 
 const AISchedulePage = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [modules, setModules] = useState([{ name: "", ects: "" }]);
+  const [modules, setModules] = useState([{ courseName: "", ects: "" }]);
 
   const handleSave = () => {
     console.log("Modules:", modules);
