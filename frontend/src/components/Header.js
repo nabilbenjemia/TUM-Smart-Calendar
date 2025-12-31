@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ModuleModal from "./ModuleModal";
 import EventModal from "./EventModal";
 
-const Header = ({ timeslots, setTimeslots }) => {
+const Header = ({ timeslots, setTimeslots, onLogout }) => {
+    const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [modules, setModules] = useState([]);
@@ -12,6 +14,12 @@ const Header = ({ timeslots, setTimeslots }) => {
 
     const handleAddEvent = () => {
         setIsEventModalOpen(true);
+    };
+
+    const handleLogout = () => {
+        console.log("User clicked on logout");
+        onLogout();
+        navigate("/login");
     };
 
     const saveEvent = (event) => {
@@ -70,7 +78,10 @@ const Header = ({ timeslots, setTimeslots }) => {
 
       {/* Right: Logout */}
       <div className="flex items-center space-x-3">
-        <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow">
+        <button 
+          onClick={handleLogout}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow"
+        >
           Logout
         </button>
       </div>

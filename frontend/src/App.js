@@ -1,31 +1,52 @@
-import React, { useState } from "react";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
-import Sidebar from "./components/Sidebar";
-import CalendarView from "./components/CalendarView";
-import Header from "./components/Header";
+import AuthPage from "./pages/AuthPage";
+import CalendarPage from "./pages/CalendarPage";
 
 function App() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [timeslots, setTimeslots] = useState([
-    { date: "2025-12-04", startTime: "08:00", endTime: "10:00", text: "Team Meeting" },
-    { date: "2025-12-04", startTime: "10:00", endTime: "11:00", text: "Pause" },
-    { date: "2025-12-05", startTime: "12:00", endTime: "17:00", text: "Introduction to AI Lecture" },
-    { date: "2025-12-09", startTime: "12:00", endTime: "19:00", text: "Introduction to ML Lecture" },
-    { date: "2025-12-09", startTime: "19:00", endTime: "20:00", text: "Pause" }
-  ]);
+  // Check if user is authenticated on mount
+  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
+    return localStorage.getItem("authToken") !== null;
+  });
+  
+  const [user, setUser] = React.useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const handleLogin = (authToken, userData) => {
+    // Store token and user data
+    localStorage.setItem("authToken", authToken);
+    localStorage.setItem("user", JSON.stringify(userData));
+    setIsAuthenticated(true);
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    // Clear all stored data
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    setIsAuthenticated(false);
+    setUser(null);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <Header timeslots={timeslots} setTimeslots={setTimeslots} />
-      <div className="flex mx-2 mb-2 gap-2 flex-auto">
-        <Sidebar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-        <CalendarView 
-          selectedDate={selectedDate} 
-          setSelectedDate={setSelectedDate}
-          timeslots={timeslots}
+    <Router>
+      <Routes>
+        <Route path="/login" element={<AuthPage onLogin={handleLogin} />} />
+        <Route 
+          path="/calendar" 
+          element={
+            isAuthenticated 
+              ? <CalendarPage user={user} onLogout={handleLogout} />
+              : <Navigate to="/login" replace />
+          } 
         />
-      </div>
-    </div>
+        <Route path="/" element={<Navigate to={isAuthenticated ? "/calendar" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/calendar" : "/login"} replace />} />
+      </Routes>
+    </Router>
   );
 }
 
