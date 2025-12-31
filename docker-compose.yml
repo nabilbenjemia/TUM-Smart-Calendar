@@ -1,37 +1,67 @@
-version: '3.8'
-
 services:
   mysql:
-    image: mysql:8
+    image: mysql:8.0
     container_name: smartcalendar-mysql
-    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: smartcalendar
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
-      - ./mysql-data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - smartcalendar-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
-  calendar-app:
-    container_name: smartcalendar-app
-    build:
-      context: ./backend/calendar
-      dockerfile: Dockerfile
-    restart: always
+  authentication:
+    build: ./backend/authentication
+    container_name: smartcalendar-auth
+    ports:
+      - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartcalendar?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartcalendar_auth?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_ROOT_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - smartcalendar-network
+
+  calendar:
+    build: ./backend/calendar
+    container_name: smartcalendar-calendar
     ports:
       - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartcalendar?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_ROOT_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+    networks:
+      - smartcalendar-network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    build: ./frontend
+    container_name: smartcalendar-frontend
     ports:
       - "3000:80"
-    restart: unless-stopped
+    depends_on:
+      - authentication
+      - calendar
+    networks:
+      - smartcalendar-network
+
+volumes:
+  mysql-data:
+
+networks:
+  smartcalendar-network:
+    driver: bridge
