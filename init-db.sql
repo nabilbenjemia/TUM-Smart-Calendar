@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS smartcalendar;
+CREATE DATABASE IF NOT EXISTS smartcalendar_auth;
