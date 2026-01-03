@@ -3,3 +3,4 @@ uvicorn[standard]==0.22.0
 requests==2.31.0
 python-dotenv==1.1.0
 openai==2.14.0
+google===3.0.0
