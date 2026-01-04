@@ -1,17 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from typing import Any, Dict
-from anthropic_client import get_llm_client
+from anthropic_client import GoogleClient
 from config import LLM_PROVIDER
+from anthropic_client import StudyPlanOutput
 
 app = FastAPI(title="Calendar LLM (Python)")
 
-client = get_llm_client()
+client = GoogleClient()
 
 
 @app.post("/api/llm/process-json")
 def process_json(payload: Dict[str, Any]):
     try:
-        result = client.process_json(payload)
+        result = client.process_json(payload,schema=StudyPlanOutput)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

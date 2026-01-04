@@ -42,7 +42,7 @@ class _HealthCheckSchema(BaseModel):
 
 class GoogleClient:
     def __init__(self, model: str = "gemini-2.5-flash"):
-        self.client = genai.Client()
+        self.client = genai.Client(api_key=GENAI_API_KEY)
         self.model = model or GENAI_MODEL
 
     def process_json(self, input_json: dict, schema: BaseModel) -> dict:
@@ -78,11 +78,13 @@ class GoogleClient:
         )
 
         # This is already guaranteed JSON-shaped
-        return schema.model_validate_json(response.text).model_dump()
+        print("GoogleClient response:", response.text)
+        # return schema.model_validate_json(response.text).model_dump()
+        return json.loads(response.text)
     
     def health_check(self) -> bool:
         """
-        Returns True if:
+        Returns True if: 
         - API is reachable
         - Model responds
         - JSON schema enforcement works
