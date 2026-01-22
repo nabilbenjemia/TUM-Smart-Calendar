@@ -1,34 +1,19 @@
-# Node.js dependencies
+# Environment variables
+.env
+
+# Node
 node_modules/
-frontend/node_modules/
-
-# Frontend build output
-dist/
 build/
 
-# Gradle build and cache
+# Java/Gradle
 .gradle/
 build/
-
-# Java wrapper and IDE files
-*.class
-*.jar
-*.war
-*.iml
-.gradle/
-out/
 bin/
-*/bin/
-*/out/
-# Database data
+
+# MySQL
 mysql-data/
 
-# Logs
-*.log
-
-# OS files
-.DS_Store
-Thumbs.db
-
-.env
-*/.env
+# IDE
+.idea/
+.vscode/
+*.iml
