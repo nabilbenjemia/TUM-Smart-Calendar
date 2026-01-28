@@ -3,44 +3,101 @@ import { useNavigate } from "react-router-dom";
 import ModuleModal from "./ModuleModal";
 import EventModal from "./EventModal";
 
-const Header = ({ timeslots, setTimeslots, onLogout }) => {
-    const navigate = useNavigate();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
-    const [modules, setModules] = useState([]);
+const Header = ({ timeslots, setTimeslots, onLogout, onScheduleSaved }) => {
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [modules, setModules] = useState([]);
+  const [isAILoading, setIsAILoading] = useState(false);
 
-    const openModal = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
+  const openModal = () => {
+    setModules([{ courseName: "", ects: "", examDateTime: "", durationMinutes: "" }]);
+    setIsModalOpen(true);
+  };
+  const closeModal = () => setIsModalOpen(false);
 
-    const handleAddEvent = () => {
-        setIsEventModalOpen(true);
+  const handleAddEvent = () => {
+    setIsEventModalOpen(true);
+  };
+
+  const handleLogout = () => {
+    console.log("User clicked on logout");
+    onLogout();
+    navigate("/login");
+  };
+
+  const saveEvent = (event) => {
+    /**
+     * add POST call to backend here to save event
+     */
+    console.log("Event saved:", event);
+    const newEvent = {
+      date: event.startTime.slice(0, 10),       // "2025-12-15"
+      startTime: event.startTime.slice(11, 16), // "12:00"
+      endTime: event.endTime.slice(11, 16),     // "14:00"
+      text: event.title
     };
+    setTimeslots([...timeslots, newEvent]);
+    setIsEventModalOpen(false);
+  };
 
-    const handleLogout = () => {
-        console.log("User clicked on logout");
-        onLogout();
-        navigate("/login");
-    };
+  const saveModules = async (data) => {
+    console.log("=== SENDING TO CALENDAR API ===");
+    console.log("Received data:", data);
 
-    const saveEvent = (event) => {
-      /**
-       * add POST call to backend here to save event
-       */
-        console.log("Event saved:", event);
-        const newEvent = {
-            date: event.startTime.slice(0, 10),       // "2025-12-15"
-            startTime: event.startTime.slice(11, 16), // "12:00"
-            endTime: event.endTime.slice(11, 16),     // "14:00"
-            text: event.title
-        };
-        setTimeslots([...timeslots, newEvent]);
-        setIsEventModalOpen(false);
-    };
+    if (!data || !data.exams) {
+      console.log("No data provided, just closing modal");
+      setIsModalOpen(false);
+      return;
+    }
 
-    const saveModules = () => {
-        console.log("Modules saved:", modules);
-        setIsModalOpen(false);
-    };
+    setIsAILoading(true);
+    try {
+      const userId = localStorage.getItem("userId") || "1";
+
+      const payload = {
+        exams: data.exams.map((exam, idx) => ({
+          id: String(idx + 1),
+          courseName: exam.courseName,
+          ects: parseInt(exam.ects, 10) || 0,
+          examDateTime: exam.examDateTime,
+          durationMinutes: parseInt(exam.durationMinutes, 10) || 0
+        })),
+        freeSlots: data.freeSlots || []
+      };
+
+      console.log("URL:", `/api/calendar/${userId}/schedule`);
+      console.log("Payload:", JSON.stringify(payload, null, 2));
+
+      const response = await fetch(`/api/calendar/${userId}/schedule`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.text();
+      console.log("Calendar API Response:", result);
+      alert(result);
+
+      // Refresh calendar events
+      if (onScheduleSaved) {
+        onScheduleSaved();
+      }
+
+    } catch (err) {
+      console.error("Error calling Calendar API:", err);
+      alert("Error: " + err.message);
+    } finally {
+      setIsAILoading(false);
+      setIsModalOpen(false);
+    }
+  };
 
   return (
     <header className="flex items-center justify-between px-6 py-4 mb-2 bg-white shadow">
@@ -50,11 +107,11 @@ const Header = ({ timeslots, setTimeslots, onLogout }) => {
           Import Calendar
         </button>
         <button className="bg-[#0065bd] hover:bg-[#005aab] text-white px-4 py-2 rounded-lg shadow"
-        onClick={() => handleAddEvent()}>
+          onClick={() => handleAddEvent()}>
           Add Event
         </button>
         <button className="bg-[#EFBF04] hover:bg-[#C29700] text-white px-4 py-2 rounded-lg shadow relative"
-        onClick={() => setIsModalOpen(true)}>
+          onClick={() => setIsModalOpen(true)}>
           <img
             src="/new_logo2.png"
             alt="AI Logo"
@@ -62,7 +119,7 @@ const Header = ({ timeslots, setTimeslots, onLogout }) => {
           />
           AI Schedule
         </button>
-      </div> 
+      </div>
 
       {/* Center: Logo + Title */}
       <div className="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
@@ -78,7 +135,7 @@ const Header = ({ timeslots, setTimeslots, onLogout }) => {
 
       {/* Right: Logout */}
       <div className="flex items-center space-x-3">
-        <button 
+        <button
           onClick={handleLogout}
           className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow"
         >
@@ -95,6 +152,7 @@ const Header = ({ timeslots, setTimeslots, onLogout }) => {
         modules={modules}
         setModules={setModules}
         onSave={saveModules}
+        isLoading={isAILoading}
       />
 
       {/* Event Modal */}

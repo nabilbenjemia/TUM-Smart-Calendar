@@ -1,4 +1,7 @@
 package com.tum.smartcalendar.calendar.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import com.tum.smartcalendar.calendar.model.Exam;
 import com.tum.smartcalendar.calendar.model.TimeSlot;
@@ -30,9 +33,12 @@ public class CalendarController {
 
     private final CalendarService calendarService;
     private final RestTemplate restTemplate = new RestTemplate();
+    private final com.tum.smartcalendar.calendar.service.ClaudeService claudeService;
 
-    public CalendarController(CalendarService calendarService) {
+    public CalendarController(CalendarService calendarService, 
+                              com.tum.smartcalendar.calendar.service.ClaudeService claudeService) {
         this.calendarService = calendarService;
+        this.claudeService = claudeService;
     }
 
     // -------------------- EXAMS --------------------
@@ -71,36 +77,39 @@ public class CalendarController {
    
     @GetMapping("/{userId}/events")
     public List<CalendarEventDTO> getAllEvents(@PathVariable String userId) {
+        scheduleLogger.info("Fetching all events for userId: {}", userId);
+        
+        // 1) Fetch exams
+        var examEvents = calendarService.getUserExams(userId).stream()
+                .map(exam -> {
+                    LocalDateTime start = exam.getExamDateTime();
+                    LocalDateTime end = start.plusMinutes(exam.getDurationMinutes());
 
-    // 1) Fetch exams
-    var examEvents = calendarService.getUserExams(userId).stream()
-            .map(exam -> {
-                LocalDateTime start = exam.getExamDateTime();
-                LocalDateTime end = start.plusMinutes(exam.getDurationMinutes());
+                    return new CalendarEventDTO(
+                            exam.getId(),
+                            "Exam: " + exam.getCourseName(),
+                            start.toString(),
+                            end.toString(),
+                            CalendarEntryType.EXAM
+                    );
+                })
+                .collect(Collectors.toList());
 
-                return new CalendarEventDTO(
-                        "Exam: " + exam.getCourseName(),
-                        start.toString(),
-                        end.toString(),
-                        CalendarEntryType.EXAM
-                );
-            })
-            .collect(Collectors.toList());
+        // 2) Fetch timeslots
+        var timeSlotEvents = calendarService.getUserTimeSlots(userId).stream()
+                .map(slot -> new CalendarEventDTO(
+                        slot.getId(),
+                        slot.getTitle(),
+                        slot.getStartTime().toString(),
+                        slot.getEndTime().toString(),
+                        CalendarEntryType.STUDY
+                ))
+                .collect(Collectors.toList());
 
-    // 2) Fetch timeslots
-    var timeSlotEvents = calendarService.getUserTimeSlots(userId).stream()
-            .map(slot -> new CalendarEventDTO(
-                    slot.getTitle(),
-                    slot.getStartTime().toString(),
-                    slot.getEndTime().toString(),
-                    CalendarEntryType.STUDY
-            ))
-            .collect(Collectors.toList());
+        // 3) Merge them into one list
+        examEvents.addAll(timeSlotEvents);
 
-    // 3) Merge them into one list
-    examEvents.addAll(timeSlotEvents);
-
-    return examEvents;
+        return examEvents;
     }
 
 
@@ -111,47 +120,70 @@ public class CalendarController {
     ) {
         calendarService.deleteTimeSlot(userId, slotId);
     }
+private static final Logger scheduleLogger = LoggerFactory.getLogger(CalendarController.class);
+
 @PostMapping("/{userId}/schedule")
 public String generateSchedule(
         @PathVariable String userId,
         @RequestBody ScheduleFrontendRequestDTO frontendRequest
 ) {
-    // STEP 1: fetch exams from DB
-    var exams = calendarService.getUserExams(userId);
+    scheduleLogger.info("=== SCHEDULE REQUEST RECEIVED ===");
+    scheduleLogger.info("UserId: {}", userId);
+    scheduleLogger.info("Request: exams={}, freeSlots={}", 
+        frontendRequest.getExams() != null ? frontendRequest.getExams().size() : 0,
+        frontendRequest.getFreeSlots() != null ? frontendRequest.getFreeSlots().size() : 0);
+    
+    // STEP 1: Get exams from frontend request
+    var frontendExams = frontendRequest.getExams();
+    if (frontendExams == null || frontendExams.isEmpty()) {
+        scheduleLogger.warn("No exams provided in request");
+        return "No exams provided";
+    }
 
     // STEP 2: extract free slots from frontend JSON
     var freeSlots = frontendRequest.getFreeSlots();
 
-    // STEP 3: Build request to AI
-    ScheduleRequestDTO aiRequest = new ScheduleRequestDTO(
-            userId,
-            exams,
-            freeSlots
-    );
+    // STEP 3: Build request to AI (as a Map for ClaudeService)
+    java.util.Map<String, Object> aiRequest = new java.util.HashMap<>();
+    aiRequest.put("userId", userId);
+    aiRequest.put("exams", frontendExams.stream().map(exam -> {
+        java.util.Map<String, Object> examMap = new java.util.HashMap<>();
+        examMap.put("id", exam.getId() != null ? exam.getId() : java.util.UUID.randomUUID().toString());
+        examMap.put("courseName", exam.getCourseName());
+        examMap.put("ects", exam.getEcts());
+        examMap.put("examDateTime", exam.getExamDateTime());
+        examMap.put("durationMinutes", exam.getDurationMinutes());
+        return examMap;
+    }).collect(Collectors.toList()));
+    aiRequest.put("freeSlots", freeSlots);
 
-    String aiUrl = "http://localhost:5000/schedule-ai"; // your AI URL
+    // STEP 4: Call AI via ClaudeService (which forwards to GenAI Python service)
+    scheduleLogger.info("Sending to GenAI: {}", aiRequest);
+    java.util.Map<String, Object> response = claudeService.processJson(aiRequest);
+    scheduleLogger.info("GenAI Response: {}", response);
 
-    // STEP 4: Call AI
-    TimeSlotResponseDTO response = restTemplate.postForObject(
-            aiUrl,
-            aiRequest,
-            TimeSlotResponseDTO.class
-    );
+    if (response == null || response.containsKey("error")) {
+        return "AI returned error: " + response.get("error");
+    }
 
-    if (response == null || response.getTimeSlots() == null) {
+    // STEP 5: Parse and save generated timeslots
+    @SuppressWarnings("unchecked")
+    java.util.List<java.util.Map<String, Object>> timeSlots = 
+        (java.util.List<java.util.Map<String, Object>>) response.get("TimeSlot");
+
+    if (timeSlots == null || timeSlots.isEmpty()) {
         return "AI returned no timeslots";
     }
 
-    // STEP 5: Save generated timeslots
-    for (TimeSlotDTO dto : response.getTimeSlots()) {
+    for (var slotMap : timeSlots) {
         TimeSlot slot = new TimeSlot(
                 userId,
-                dto.getExamId(),
-                LocalDateTime.parse(dto.getStartTime()),
-                LocalDateTime.parse(dto.getEndTime()),
+                (String) slotMap.get("examId"),
+                LocalDateTime.parse((String) slotMap.get("startTime")),
+                LocalDateTime.parse((String) slotMap.get("endTime")),
                 CalendarEntryType.STUDY,
                 SlotSource.AUTO_GENERATED,
-                dto.getTitle()
+                (String) slotMap.get("title")
         );
         calendarService.addTimeSlot(userId, slot);
     }
@@ -178,54 +210,46 @@ public String generateSchedule(
     ) {
         LocalDateTime fromDate = LocalDateTime.parse(from);
         LocalDateTime toDate = LocalDateTime.parse(to);
-    List<CalendarEventDTO> result = new ArrayList<>();
+        List<CalendarEventDTO> result = new ArrayList<>();
 
-    // ----------------------------
-    // 1) Exams in range
-    // ----------------------------
-    var exams = calendarService.getUserExams(userId);
+        // 1) Exams in range
+        var examEvents = calendarService.getUserExams(userId).stream()
+                .filter(exam -> {
+                    LocalDateTime start = exam.getExamDateTime();
+                    LocalDateTime end = start.plusMinutes(exam.getDurationMinutes());
+                    return !start.isAfter(toDate) && !end.isBefore(fromDate);
+                })
+                .map(exam -> {
+                    LocalDateTime start = exam.getExamDateTime();
+                    LocalDateTime end = start.plusMinutes(exam.getDurationMinutes());
 
-    var examEvents = exams.stream()
-            .filter(exam -> {
-                LocalDateTime start = exam.getExamDateTime();
-                LocalDateTime end = start.plusMinutes(exam.getDurationMinutes());
-                return !start.isAfter(toDate) && !end.isBefore(fromDate); // overlap check
-            })
-            .map(exam -> {
-                LocalDateTime start = exam.getExamDateTime();
-                LocalDateTime end = start.plusMinutes(exam.getDurationMinutes());
+                    return new CalendarEventDTO(
+                            exam.getId(),
+                            "Exam: " + exam.getCourseName(),
+                            start.toString(),
+                            end.toString(),
+                            CalendarEntryType.EXAM
+                    );
+                })
+                .collect(Collectors.toList());
 
-                return new CalendarEventDTO(
-                        "Exam: " + exam.getCourseName(),
-                        start.toString(),
-                        end.toString(),
-                        CalendarEntryType.EXAM
-                );
-            })
-            .toList();
+        // 2) Timeslots in range
+        var slotEvents = calendarService.getUserTimeSlotsInRange(userId, fromDate, toDate).stream()
+                .map(slot -> new CalendarEventDTO(
+                        slot.getId(),
+                        slot.getTitle(),
+                        slot.getStartTime().toString(),
+                        slot.getEndTime().toString(),
+                        CalendarEntryType.STUDY
+                ))
+                .collect(Collectors.toList());
 
-    // ----------------------------
-    // 2) Timeslots in range
-    // ----------------------------
-    var slots = calendarService.getUserTimeSlotsInRange(userId, fromDate, toDate);
+        // 3) Merge
+        result.addAll(examEvents);
+        result.addAll(slotEvents);
 
-    var slotEvents = slots.stream()
-            .map(slot -> new CalendarEventDTO(
-                    slot.getTitle(),
-                    slot.getStartTime().toString(),
-                    slot.getEndTime().toString(),
-                    CalendarEntryType.STUDY
-            ))
-            .toList();
-
-    // ----------------------------
-    // 3) Merge
-    // ----------------------------
-    result.addAll(examEvents);
-    result.addAll(slotEvents);
-
-    return result;
-}
+        return result;
+    }
     
  
 }

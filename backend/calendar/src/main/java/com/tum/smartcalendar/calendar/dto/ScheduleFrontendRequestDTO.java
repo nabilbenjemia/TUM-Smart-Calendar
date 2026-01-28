@@ -4,12 +4,22 @@ import java.util.List;
 
 public class ScheduleFrontendRequestDTO {
 
+    private List<ExamDTO> exams;
     private List<FreeSlotDTO> freeSlots;
 
     public ScheduleFrontendRequestDTO() {} // REQUIRED
 
-    public ScheduleFrontendRequestDTO(List<FreeSlotDTO> freeSlots) {
+    public ScheduleFrontendRequestDTO(List<ExamDTO> exams, List<FreeSlotDTO> freeSlots) {
+        this.exams = exams;
         this.freeSlots = freeSlots;
+    }
+
+    public List<ExamDTO> getExams() {
+        return exams;
+    }
+
+    public void setExams(List<ExamDTO> exams) {
+        this.exams = exams;
     }
 
     public List<FreeSlotDTO> getFreeSlots() {
@@ -20,4 +30,3 @@ public class ScheduleFrontendRequestDTO {
         this.freeSlots = freeSlots;
     }
 }
-

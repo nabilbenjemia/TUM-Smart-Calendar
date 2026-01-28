@@ -66,13 +66,14 @@ class GoogleClient:
             "3. Do not include any explanations or additional text outside the JSON structure.\n"
         )
 
+        # Use response_schema with the Pydantic class directly (not JSON schema dict)
         response = self.client.models.generate_content(
             model=self.model,
             contents=prompt,
             config={
                 "system_instruction": SYSTEM_INSTRUCTION,
                 "response_mime_type": "application/json",
-                "response_json_schema": schema.model_json_schema(),
+                "response_schema": schema,
                 "temperature": 0,
             },
         )
@@ -95,7 +96,7 @@ class GoogleClient:
                 contents='{"ping":"pong"}',
                 config={
                     "response_mime_type": "application/json",
-                    "response_json_schema": _HealthCheckSchema.model_json_schema(),
+                    "response_schema": _HealthCheckSchema,
                     "temperature": 0,
                 },
             )
