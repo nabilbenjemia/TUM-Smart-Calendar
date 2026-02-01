@@ -132,18 +132,13 @@ const ModuleModal = ({ isOpen, onClose, modules, setModules, onSave, isLoading }
       (s) => (s.date && s.date.trim() !== "") || (s.startTime && s.startTime.trim() !== "") || (s.endTime && s.endTime.trim() !== "")
     );
 
-    if (startedSlots.length === 0) {
-      alert("Please enter at least one free time slot.");
-      return;
-    }
-
     // Check if any fields are missing in the started slots
     const incomplete = startedSlots.find(
       (s) => !s.date || !s.date.trim() || !s.startTime || s.startTime.endsWith("T") || !s.endTime || s.endTime.endsWith("T")
     );
 
     if (incomplete) {
-      alert("Please fill in the Date, Start Time, and End Time for all free time slots.");
+      alert("Please fill in the Date, Start Time, and End Time for all free time slots currently being added, or remove the incomplete slot.");
       return;
     }
 

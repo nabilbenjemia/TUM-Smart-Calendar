@@ -26,19 +26,44 @@ const Header = ({ timeslots, setTimeslots, onLogout, onScheduleSaved }) => {
     navigate("/login");
   };
 
-  const saveEvent = (event) => {
-    /**
-     * add POST call to backend here to save event
-     */
-    console.log("Event saved:", event);
-    const newEvent = {
-      date: event.startTime.slice(0, 10),       // "2025-12-15"
-      startTime: event.startTime.slice(11, 16), // "12:00"
-      endTime: event.endTime.slice(11, 16),     // "14:00"
-      text: event.title
-    };
-    setTimeslots([...timeslots, newEvent]);
-    setIsEventModalOpen(false);
+  const saveEvent = async (event) => {
+    try {
+      const userId = localStorage.getItem("userId") || "1";
+      console.log("Saving manual event:", event);
+
+      const payload = {
+        userId: userId,
+        title: event.title,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        type: "STUDY", // Default for manual events
+        source: "MANUAL"
+      };
+
+      const response = await fetch(`/api/calendar/${userId}/timeslots`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log("Event saved to backend successfully");
+
+      // Refresh events from backend to ensure consistency
+      if (onScheduleSaved) {
+        onScheduleSaved();
+      }
+
+      setIsEventModalOpen(false);
+    } catch (err) {
+      console.error("Error saving manual event:", err);
+      alert("Failed to save event: " + err.message);
+    }
   };
 
   const saveModules = async (data) => {

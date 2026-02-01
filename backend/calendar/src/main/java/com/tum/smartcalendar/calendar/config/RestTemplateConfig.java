@@ -11,7 +11,9 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        // Buffering request factory so responses can be read multiple times if needed
-        return new RestTemplate(new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(120000); // 120 seconds
+        factory.setReadTimeout(120000); // 120 seconds
+        return new RestTemplate(new BufferingClientHttpRequestFactory(factory));
     }
 }

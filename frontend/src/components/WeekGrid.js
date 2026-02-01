@@ -56,7 +56,8 @@ const WeekGrid = ({ weekDays, timeslots, onDeleteEvent }) => {
                       }}
                     >
                       <div
-                        className="flex items-center justify-center h-full px-2 py-0.5 bg-[#5E94D4] h-[95%] rounded-lg w-[95%] border-2 border-white cursor-pointer hover:bg-red-500 transition-colors group"
+                        className="flex items-center justify-center h-full px-2 py-0.5 h-[95%] rounded-lg w-[95%] border-2 border-white cursor-pointer hover:bg-opacity-80 transition-colors group"
+                        style={{ backgroundColor: slot.color || "#5E94D4" }}
                         onClick={() => onDeleteEvent && onDeleteEvent(slot.id, slot.type)}
                         title="Click to delete"
                       >

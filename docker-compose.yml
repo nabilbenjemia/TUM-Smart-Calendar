@@ -12,7 +12,7 @@ services:
     networks:
       - smartcalendar-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       timeout: 20s
       retries: 10
 
@@ -32,6 +32,10 @@ services:
         condition: service_healthy
     networks:
       - smartcalendar-network
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend/authentication
 
   calendar:
     build: ./backend/calendar
@@ -50,6 +54,10 @@ services:
         condition: service_started
     networks:
       - smartcalendar-network
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend/calendar
 
   genai:
     build: ./backend/genai
@@ -60,6 +68,14 @@ services:
       GENAI_API_KEY: ${GENAI_API_KEY}
     networks:
       - smartcalendar-network
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/genai
+          target: /app
+          ignore:
+            - __pycache__
+            - tests
 
   frontend:
     build: ./frontend
@@ -71,9 +87,16 @@ services:
       - calendar
     networks:
       - smartcalendar-network
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend
+          ignore:
+            - node_modules
 
 volumes:
   mysql-data:
+
 
 networks:
   smartcalendar-network:

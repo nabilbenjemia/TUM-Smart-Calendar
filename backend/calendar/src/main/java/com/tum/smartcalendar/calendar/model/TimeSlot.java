@@ -25,13 +25,15 @@ public class TimeSlot {
     private SlotSource source;
 
     private String title;
+    private String color;
 
-    public TimeSlot() {}
+    public TimeSlot() {
+    }
 
     public TimeSlot(String userId, String examId,
-                    LocalDateTime start, LocalDateTime end,
-                    CalendarEntryType type, SlotSource source,
-                    String title) {
+            LocalDateTime start, LocalDateTime end,
+            CalendarEntryType type, SlotSource source,
+            String title, String color) {
         this.userId = userId;
         this.examId = examId;
         this.startTime = start;
@@ -39,6 +41,7 @@ public class TimeSlot {
         this.type = type;
         this.source = source;
         this.title = title;
+        this.color = color;
     }
 
     public boolean overlapsWith(TimeSlot other) {
@@ -104,6 +107,14 @@ public class TimeSlot {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 
     @Override

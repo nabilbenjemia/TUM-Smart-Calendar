@@ -30,7 +30,8 @@ function CalendarPage({ onLogout }) {
         startTime: event.startTime.slice(11, 16),     // "10:00"
         endTime: event.endTime.slice(11, 16),         // "12:00"
         text: event.title,
-        type: event.type
+        type: event.type,
+        color: event.color
       }));
 
       setTimeslots(formattedEvents);

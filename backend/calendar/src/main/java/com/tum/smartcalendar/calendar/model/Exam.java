@@ -11,22 +11,25 @@ public class Exam {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    private String userId;  // multi-user support
+    private String userId; // multi-user support
 
     private String courseName;
     private int ects;
     private LocalDateTime examDateTime;
     private int durationMinutes;
+    private String color;
 
-    public Exam() {}
+    public Exam() {
+    }
 
     public Exam(String userId, String courseName, int ects,
-                LocalDateTime examDateTime, int durationMinutes) {
+            LocalDateTime examDateTime, int durationMinutes, String color) {
         this.userId = userId;
         this.courseName = courseName;
         this.ects = ects;
         this.examDateTime = examDateTime;
         this.durationMinutes = durationMinutes;
+        this.color = color;
     }
 
     public String getId() {
@@ -48,9 +51,11 @@ public class Exam {
     public int getDurationMinutes() {
         return durationMinutes;
     }
+
     public void setUserId(String userId) {
         this.userId = userId;
     }
+
     public void setCourseName(String courseName) {
         this.courseName = courseName;
     }
@@ -65,6 +70,14 @@ public class Exam {
 
     public void setDurationMinutes(int durationMinutes) {
         this.durationMinutes = durationMinutes;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 
     @Override
